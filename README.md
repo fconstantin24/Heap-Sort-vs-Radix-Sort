@@ -1,0 +1,2 @@
+Generaţi un vector de n întregi cu n = 1e6. Sortaţi vectorul cu cei doi algoritmi şi comparaţi rezultatele (aici ne intereseaza viteza sortării, vezi https://stackoverflow.com/questions/5248915/execution-time-of-c-program). [80% notă]
+Introduceţi o variabilă globală cu care să contorizaţi numărul de apelări ale funcţiei „cerne“. Afişaţi numărul de apelări necesare pentru construirea heap-ului (makeHeap) şi numărul de apelări necesare pentru tot algoritmul (heapSort). [10% notă]
