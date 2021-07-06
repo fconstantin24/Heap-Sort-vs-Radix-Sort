@@ -1,0 +1,158 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#define BYTE 8
+#define COUNT_BYTE 256
+
+int CountCerne = 0;
+int countMakeHeap = 0;
+int countHeapSort = 0;
+
+//Heap Sort
+void schimba(int a[],int i,int j) //functie auxiliara
+{
+    int aux;
+    aux = a[i];
+    a[i] = a[j];
+    a[j] = aux;
+}
+void cerne(int a[],int n,int k)
+{
+    CountCerne++;
+    int fiuStanga = 2 * k + 1, //pozitia primului copil
+        fiuDreapta = 2 * k + 2,
+        pozMax = fiuStanga; //pozitia copilului mai mare
+    if(fiuStanga >= n)
+        return; //"nodul" k este frunza
+    if(fiuDreapta < n) {
+        if(a[fiuDreapta] > a[fiuStanga] ) {
+            pozMax = fiuDreapta;
+        }
+    }//am ales copilul mai mare
+    if(a[k] < a[pozMax]) {
+        schimba(a,k,pozMax); //nodul k este "cernut" - coboara
+        cerne(a,n,pozMax); //cernem la noua lui pozitie
+    }
+   
+}
+void makeHeap(int a[],int n) //functia mai e numita "heapify"
+{
+    countMakeHeap++;
+    //pentru i > n / 2, i este cu siguranta nod frunza
+    for(int i = n / 2;i >= 0;i--) { //ne asiguram ca exista ordine
+        cerne(a,n,i); // pentru orice nod de la i la n-1
+    }
+}
+void heapSort(int a[],int n)
+{   
+    countHeapSort++;
+    clock_t begin = clock();
+    makeHeap(a,n); //construim un heap
+    while(n > 1) {
+        schimba(a,0,n-1); //mutam maximul pe ultima pozitie
+        n--; //am asezat un element pe pozitia finala
+        cerne(a,n,0); //elementul pus in locul maximului trebuie "cernut"
+        //obtinem din nou forma de heap
+    }
+ clock_t end = clock();
+double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+printf("Timp heapsort: %f\n", time_spent);
+}
+
+
+
+
+//Radix Sort
+int obtineOctetul(int n,int byteNr)
+{   //cautam octetul de la pozitia byteNr
+    //octetul de pe pozitia 0 este LSD = octetul cel mai din dreapta(pentru int)
+    int bitsNr =  BYTE * byteNr;
+    int mask = COUNT_BYTE - 1;
+    return (n >> bitsNr) & mask;
+}
+void rad(int *a,int *b, int byteNr,int n)
+{   //sortare dupa octetul de pe pozitia byteNr,
+    // pe pozitia 0 este LSD = octetul cel mai din dreapta
+    int i,
+        count[COUNT_BYTE] = {0}, //numaram cate elemente au "car." i pe pozitia byteNr
+        index[COUNT_BYTE] = {0}; //pozitia la care vom pune urmatorul element cu "car." i
+    for(i = 0; i < n;i++) {
+        int car = obtineOctetul(a[i],byteNr);
+        count[car]++;
+    }
+    for(i = 1;i < COUNT_BYTE;i++) //sectionam vectorul b
+        index[i] = index[i-1] + count[i-1];
+    for(i = 0; i < n; i++) { //umplem sectiunile
+        int car = obtineOctetul(a[i],byteNr);
+        b[index[car]++] = a[i];
+    }
+}
+void radixSort(int *a,int n)
+{   clock_t begin = clock();
+    int *b = malloc(n * sizeof(int)), //vector folosit la copiere
+        byteNr, //pozitia curenta
+        k = sizeof(a[0]); //numarul de "caractere"
+    for(byteNr = 0; byteNr < k; byteNr += 2) {
+        rad(a, b, byteNr, n); //in loc sa copiem b inapoi in a la fiecare pas
+        rad(b, a, byteNr + 1, n); //copiem doar o data la 2 pasi
+    }
+    free(b);
+clock_t end = clock();
+double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+printf("Timp radixsort: %f\n", time_spent);
+
+}
+
+
+
+int main()
+{
+    int v[1000000],
+        aux[1000000];
+    int rand(void);
+    int i, n;
+    time_t t;
+
+    n = 5;
+
+    //initializarea generatorului ne demere aleatorii
+    srand((unsigned) time(&t));
+
+    //printeaza n nr de la 1 la 499
+    for( i = 0 ; i < n ; i++ ) {
+        v[i] = rand() % 500;
+
+        if (i%2 != 0)
+            v[i] = (-1) * v[i];
+        // copiez vectorul intr-un auxiliar pentru a 
+        // pastra ordinea initala
+        aux[i] = v[i];
+    }
+
+    printf("Vector initial:\n");
+    for( i = 0 ; i < n ; i++ ) {
+        printf("%d; ", v[i]);
+    }
+    printf("\n\n");
+
+    heapSort(v, n);
+    printf("Vector sortat cu heapSort:\n");
+    for( i = 0 ; i < n ; i++ ) {
+        printf("%d; ", v[i]);
+    }
+    printf("\n\n");
+
+    radixSort(aux, n);
+    printf("Vector sortat cu radixSort:\n");
+    for( i = 0 ; i < n ; i++ ) {
+        printf("%d; ", v[i]);
+    }
+    printf("\n\n");
+
+    printf("Numar de apelari functia cerne: %d\n", CountCerne);
+    printf("Numar de apelari functia makeHeap: %d\n", countMakeHeap);
+    printf("Numar de apelari functia heapSort: %d\n", countHeapSort);
+   
+
+    return(0);
+}
